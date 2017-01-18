@@ -1,0 +1,1 @@
+"frequency.c" OPTIMIZE (8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\frequency.lst) TABS (2) OBJECT(.\Objects\frequency.obj)

@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\frequency.obj" 
+TO ".\Objects\frequency counter" 
+PRINT(".\Listings\frequency counter.m51") RAMSIZE(256) 

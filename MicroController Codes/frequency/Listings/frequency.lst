@@ -1,0 +1,249 @@
+C51 COMPILER V9.54   FREQUENCY                                                             04/25/2016 18:35:54 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE FREQUENCY
+OBJECT MODULE PLACED IN .\Objects\frequency.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE frequency.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings
+                    -\frequency.lst) TABS(2) OBJECT(.\Objects\frequency.obj)
+
+line level    source
+
+   1          #include "at89c5131.h"
+   2          #include "stdio.h"
+   3          
+   4          #define LCD_data  P2                // LCD Data port
+   5          
+   6          void LCD_Init();
+   7          
+   8          void LCD_DataWrite(char dat);
+   9          void LCD_CmdWrite(char cmd);
+  10          void LCD_StringWrite(char * str, unsigned char len);
+  11          void LCD_Ready();
+  12          void sdelay(int delay);
+  13          void delay_ms(int delay);
+  14          
+  15          sbit LCD_rs = P0^0;                 // LCD Register Select
+  16          sbit LCD_rw = P0^1;                 // LCD Read/Write
+  17          sbit LCD_en = P0^2;                 // LCD Enable
+  18          sbit LCD_busy = P2^7; 
+  19          
+  20          
+  21          sbit T1=P3^4;
+  22          
+  23          sbit VS=P1^4;
+  24          sbit VR=P1^5;
+  25          sbit VZ=P1^6;
+  26          
+  27          sbit R0=P1^0;//10k
+  28          sbit R1=P1^1;//1M
+  29          sbit R2=P1^2;//100
+  30          
+  31          int pulse;
+  32          int y;
+  33          
+  34          //char a0[1],a1[1],a2[1],a3[1],a4[1],a5[1],a6[1];
+  35          //int y0,y1,y2,y3,y4,y5,y6;
+  36          char ascii[7];
+  37          
+  38          void main() {
+  39   1        
+  40   1              VS=1;
+  41   1              VR=1;
+  42   1              VZ=1;
+  43   1              R0=0;
+  44   1              R1=1;
+  45   1              R2=1;
+  46   1        
+  47   1        
+  48   1      
+  49   1              P2 = 0x00;                      // Make Port 2 output 
+  50   1              P0 &= 0xF0; 
+  51   1      
+  52   1      
+  53   1              LCD_Init();
+  54   1                
+C51 COMPILER V9.54   FREQUENCY                                                             04/25/2016 18:35:54 PAGE 2   
+
+  55   1        
+  56   1              T1=1 ; 
+  57   1              TMOD = 0x15 ;
+  58   1             
+  59   1                    while(1)
+  60   1                            {   delay_ms(1000);
+  61   2                              
+  62   2                                TL0=0x00;
+  63   2                                TH0=0x00;
+  64   2                                TL1=0x80;
+  65   2                                TH1=0x3D;
+  66   2                              
+  67   2                                TR0=1;
+  68   2                                TR1=1;
+  69   2                                
+  70   2                                while(TF1==0){};
+  71   2                                
+  72   2                                TR0=0;
+  73   2                                TR1=0;
+  74   2                                TF1=0;
+  75   2                                
+  76   2                              pulse=(TH0<<8)+TL0;
+  77   2                              y=pulse*40;
+  78   2                             if(y>=1800 && y<=2200){
+  79   3                                VS=0;
+  80   3                                VR=1;
+  81   3                                VZ=1;  
+  82   3                             }  
+  83   2      
+  84   2                             if(y>=2300 && y<=2700){
+  85   3                                VS=1;
+  86   3                                VR=0;
+  87   3                                VZ=1;  
+  88   3                             }  
+  89   2      
+  90   2                             if(y>=2800 && y<=3300){
+  91   3                                VS=1;
+  92   3                                VR=1;
+  93   3                                VZ=0;  
+  94   3                             }                         
+  95   2            
+  96   2      
+  97   2      
+  98   2                             if(y>=3600 && y<=4300)
+  99   2                               {R0=0;
+ 100   3                                R1=1;
+ 101   3                                R2=1;
+ 102   3                               }
+ 103   2                             
+ 104   2                            if(y>=4400 && y<=4800)
+ 105   2                               {R0=1;
+ 106   3                                R1=0;
+ 107   3                                R2=1;
+ 108   3                               }    
+ 109   2      
+ 110   2                             if(y>=4900 && y<=5400)
+ 111   2                               {R0=1;
+ 112   3                                R1=1;
+ 113   3                                R2=0;
+ 114   3                               }                         
+ 115   2                                               
+ 116   2                             
+C51 COMPILER V9.54   FREQUENCY                                                             04/25/2016 18:35:54 PAGE 3   
+
+ 117   2                             
+ 118   2                                
+ 119   2      
+ 120   2                              sprintf(ascii,"%d",y);
+ 121   2                              
+ 122   2                          
+ 123   2                        
+ 124   2                              LCD_CmdWrite(0x80);
+ 125   2                              LCD_StringWrite(ascii,7);
+ 126   2                      
+ 127   2                            }
+ 128   1      
+ 129   1                          }
+ 130                                
+ 131                              
+ 132          void LCD_Init()
+ 133          {
+ 134   1        sdelay(100);
+ 135   1        LCD_CmdWrite(0x38);     // LCD 2lines, 5*7 matrix
+ 136   1        LCD_CmdWrite(0x0E);     // Display ON cursor ON  Blinking off
+ 137   1        LCD_CmdWrite(0x01);     // Clear the LCD
+ 138   1        LCD_CmdWrite(0x80);     // Cursor to First line First Position
+ 139   1      }
+ 140          
+ 141          
+ 142          
+ 143          void LCD_CmdWrite(char cmd)
+ 144          {
+ 145   1        LCD_Ready();
+ 146   1        LCD_data=cmd;           // Send the command to LCD
+ 147   1        LCD_rs=0;               // Select the Command Register by pulling LCD_rs LOW
+ 148   1        LCD_rw=0;               // Select the Write Operation  by pulling RW LOW
+ 149   1        LCD_en=1;               // Send a High-to-Low Pusle at Enable Pin
+ 150   1        sdelay(5);
+ 151   1        LCD_en=0;
+ 152   1        sdelay(5);
+ 153   1      }
+ 154          
+ 155          
+ 156          void LCD_DataWrite( char dat)
+ 157          {
+ 158   1        LCD_Ready();
+ 159   1        LCD_data=dat;           // Send the data to LCD
+ 160   1        LCD_rs=1;               // Select the Data Register by pulling LCD_rs HIGH
+ 161   1        LCD_rw=0;               // Select the Write Operation by pulling RW LOW
+ 162   1        LCD_en=1;               // Send a High-to-Low Pusle at Enable Pin
+ 163   1        sdelay(5);
+ 164   1        LCD_en=0;
+ 165   1        sdelay(5);
+ 166   1      }
+ 167          
+ 168          
+ 169          
+ 170          void LCD_StringWrite( char * str, unsigned char length)
+ 171          {
+ 172   1          while(length>0)
+ 173   1          {
+ 174   2              LCD_DataWrite(*str);
+ 175   2              str++;
+ 176   2              length--;
+ 177   2          }
+ 178   1      }
+C51 COMPILER V9.54   FREQUENCY                                                             04/25/2016 18:35:54 PAGE 4   
+
+ 179          
+ 180          
+ 181          void LCD_Ready()
+ 182          {
+ 183   1        LCD_data = 0xFF;
+ 184   1        LCD_rs = 0;
+ 185   1        LCD_rw = 1;
+ 186   1        LCD_en = 0;
+ 187   1        sdelay(5);
+ 188   1        LCD_en = 1;
+ 189   1      
+ 190   1        while(LCD_busy == 1)
+ 191   1        {
+ 192   2          LCD_en = 0;
+ 193   2          LCD_en = 1;
+ 194   2        }
+ 195   1        LCD_en = 0;
+ 196   1      }
+ 197          
+ 198          
+ 199          
+ 200          void sdelay(int delay)
+ 201          {
+ 202   1        char d=0;
+ 203   1        while(delay>0)
+ 204   1        {
+ 205   2          for(d=0;d<5;d++);
+ 206   2          delay--;
+ 207   2        }
+ 208   1      }
+ 209          
+ 210          
+ 211          void delay_ms(int delay)
+ 212          {
+ 213   1        int d=0;
+ 214   1        while(delay>0)
+ 215   1        {
+ 216   2          for(d=0;d<382;d++);
+ 217   2          delay--;
+ 218   2        }
+ 219   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    527    ----
+   CONSTANT SIZE    =      3    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11       6
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
